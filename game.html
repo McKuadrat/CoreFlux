@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreFlux Engine v1.8</title>
+    <style>
+        :root { --neon: #00ff41; --danger: #ff3131; --bg: #0a0a0b; --flux: #00e1ff; }
+        body { background: var(--bg); color: #c0c0c0; font-family: "Consolas", monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        
+        #cmd-window { width: 900px; height: 600px; border: 1px solid var(--neon); background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column; position: relative; transition: 0.3s; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); }
+        .glitch-active { animation: shake 0.1s infinite !important; border-color: var(--danger) !important; filter: hue-rotate(90deg); }
+        @keyframes shake { 0%{transform:translate(2px,1px)} 50%{transform:translate(-2px,-1px)} 100%{transform:translate(1px,2px)} }
+
+        .border-danger { border-color: var(--danger) !important; box-shadow: 0 0 20px rgba(255, 49, 49, 0.3); }
+        .border-battle { border-style: dashed !important; border-width: 2px; }
+
+        #title-bar { background: var(--neon); color: #000; padding: 5px 15px; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between; letter-spacing: 1px; }
+        #content-area { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #log-display { flex-grow: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; }
+        #log-display::-webkit-scrollbar { width: 4px; }
+        #log-display::-webkit-scrollbar-thumb { background: var(--neon); }
+
+        .entry { margin-bottom: 15px; border-left: 2px solid rgba(0, 255, 65, 0.2); padding-left: 15px; animation: fadeIn 0.3s forwards; line-height: 1.6; }
+        @keyframes fadeIn { from{opacity:0;transform:translateX(-5px)} to{opacity:1;transform:translateX(0)} }
+        
+        .name-tag { color: var(--neon); font-weight: bold; letter-spacing: 1px; }
+        .system-tag { color: #ffff00; font-weight: bold; }
+        .btn { background: rgba(0, 255, 65, 0.05); border: 1px solid var(--neon); color: var(--neon); padding: 12px; margin: 5px 0; cursor: pointer; width: 100%; text-align: left; font-family: inherit; transition: 0.2s; font-size: 13px; }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); font-weight: bold; }
+
+        .stat-box { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); color: var(--neon); padding: 10px; min-width: 140px; margin-bottom: 5px; backdrop-filter: blur(5px); }
+        .desktop-ui-container { position: fixed; z-index: 100; display: flex; gap: 10px; }
+        #debug-panel { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); border: 1px solid #444; color: #0f0; padding: 10px; font-size: 10px; display: none; pointer-events: none; max-width: 250px; z-index: 10001; }
+        
+        /* Universal Exit & Watermark Styles */
+        .universal-exit-btn { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); color: var(--neon); text-decoration: none; border: 1px solid var(--neon); border-radius: 50px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; z-index: 9999; transition: 0.3s; backdrop-filter: blur(5px); }
+        .universal-exit-btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--neon); transform: translateY(-3px); }
+        .universal-watermark { position: fixed; bottom: 20px; left: 20px; display: flex; align-items: center; gap: 12px; pointer-events: none; z-index: 9998; animation: wmPulse 3s infinite ease-in-out; }
+        .wm-line { width: 2px; height: 30px; background: var(--neon); box-shadow: 0 0 10px var(--neon); }
+        .wm-text { display: flex; flex-direction: column; font-family: 'Courier New', monospace; }
+        .wm-text small { font-size: 8px; color: var(--flux); letter-spacing: 2px; }
+        .wm-text strong { font-size: 12px; color: #fff; letter-spacing: 3px; }
+        @keyframes wmPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+    </style>
+</head>
+<body>
+
+    <div id="debug-panel"></div>
+    <div id="ui-container-left" class="desktop-ui-container" style="left: 30px; top: 30px; flex-direction: column;"></div>
+    <div id="ui-container-right" class="desktop-ui-container" style="right: 30px; top: 30px; flex-direction: column;"></div>
+    <div id="ui-container-down-right" class="desktop-ui-container" style="right: 30px; bottom: 80px; flex-direction: column-reverse;"></div>
+
+    <div id="cmd-window">
+        <div id="title-bar"><span id="m-title">COREFLUX_OS</span><span id="clock">00:00:00</span></div>
+        <div id="content-area">
+            <div id="log-display"></div>
+            <div id="choices-container"></div>
+            <div id="status-msg" style="font-size: 10px; color: var(--neon); margin-top: 10px; opacity: 0.7;">AWAITING_CORE_FLUX...</div>
+        </div>
+    </div>
+
+    <a href="index.html" class="universal-exit-btn">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg>
+        <span>EXIT_TO_INDEX</span>
+    </a>
+    <div class="universal-watermark">
+        <span class="wm-line"></span>
+        <div class="wm-text"><small>DEVELOPER_ID</small><strong>MC KUADRAT</strong></div>
+    </div>
+
+<script>
+    let manifest, storyData, resources = null;
+    let state = { vars: {}, currentScene: null, isGlitching: false };
+
+    const api = {
+        get vars() { return state.vars; },
+        num: (p) => {
+            if (p === 'random') return Math.floor(Math.random() * 101);
+            if (typeof p === 'string' && p.startsWith('random[')) {
+                let r = p.match(/\[(\d+)-(\d+)\]/);
+                return r ? Math.floor(Math.random() * (parseInt(r[2]) - parseInt(r[1]) + 1)) + parseInt(r[1]) : 0;
+            }
+            return parseFloat(p) || 0;
+        },
+        const: (n, v, m) => {
+            let a = api.num(v);
+            if (state.vars[n] === undefined) state.vars[n] = 0;
+            if (m === 'set') state.vars[n] = a;
+            else if (m === 'add') state.vars[n] += a;
+            else if (m === 'remove') state.vars[n] -= a;
+            updateUI(); updateDebug();
+        },
+        display: (l, v, d, p) => {
+            let cId = d === 'down' ? 'ui-container-down-right' : `ui-container-${p}`;
+            const cont = document.getElementById(cId);
+            if (!cont) return;
+            let el = cont.querySelector(`[data-var="${v}"]`);
+            if (!el) {
+                el = document.createElement('div'); el.className = 'stat-box'; el.dataset.var = v; el.dataset.label = l;
+                cont.appendChild(el);
+            }
+            updateUI();
+        },
+        glitch: (d) => {
+            if (state.isGlitching) return; state.isGlitching = true;
+            document.getElementById('cmd-window').classList.add('glitch-active');
+            setTimeout(() => { document.getElementById('cmd-window').classList.remove('glitch-active'); state.isGlitching = false; }, d * 1000);
+        },
+        load: async (f) => {
+            try {
+                let data = (resources && resources[f]) ? JSON.parse(resources[f]) : await (await fetch(f)).json();
+                storyData = data; loadScene(storyData[0].id);
+            } catch(e) { api.setText("LOAD_ERROR"); }
+        },
+        jumpTo: (id) => loadScene(id),
+        setText: (t) => document.getElementById('status-msg').innerText = `> ${t.toUpperCase()}`
+    };
+
+    // Helper untuk eksekusi banyak baris skrip
+    function runScript(raw) {
+        if (!raw) return;
+        try {
+            const lines = typeof raw === 'string' ? raw.split(';') : raw;
+            lines.forEach(line => {
+                if (line.trim()) new Function('api', line.trim())(api);
+            });
+        } catch (e) { console.error("Script Err:", e); }
+    }
+
+    function updateUI() {
+        document.querySelectorAll('.stat-box').forEach(el => {
+            el.innerHTML = `<small style="font-size:8px;opacity:0.6;text-transform:uppercase">${el.dataset.label}</small><br><b style="font-size:16px">${state.vars[el.dataset.var] || 0}</b>`;
+        });
+    }
+
+    function updateDebug() {
+        if (!manifest?.debug) return;
+        const dbg = document.getElementById('debug-panel'); dbg.style.display = 'block';
+        dbg.innerHTML = `<b>DEBUG_MODE</b><br>Scene: ${state.currentScene}<br>Vars: ${JSON.stringify(state.vars)}`;
+    }
+
+    function parse(t) {
+        return t.replace(/\$disp\((.*?)\)\$/g, (m, p) => p.includes('random') ? api.num(p) : (state.vars[p] ?? `[${p}]`));
+    }
+
+    async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMod = urlParams.get('mode') === 'mod';
+        try {
+            if (isMod && sessionStorage.getItem('mod_resources')) {
+                resources = JSON.parse(sessionStorage.getItem('mod_resources'));
+                manifest = JSON.parse(sessionStorage.getItem('mod_manifest'));
+                const first = Array.isArray(manifest.files.story) ? manifest.files.story[0] : manifest.files.story;
+                storyData = JSON.parse(resources[first]);
+                state.vars = JSON.parse(resources[manifest.files.vars]);
+                api.setText("MOD_CORE_ACTIVE");
+            } else {
+                const resM = await fetch('manifest.json');
+                if (!resM.ok) throw new Error("LOCAL_MANIFEST_NOT_FOUND");
+                manifest = await resM.json();
+                const storyFiles = Array.isArray(manifest.files.story) ? manifest.files.story : [manifest.files.story];
+                storyData = await (await fetch(storyFiles[0])).json();
+                state.vars = await (await fetch(manifest.files.vars)).json();
+                api.setText("ORIGINAL_CORE_LOADED");
+            }
+            document.getElementById('m-title').innerText = manifest.name.toUpperCase();
+            loadScene(manifest.start || storyData[0].id);
+        } catch(e) {
+            document.getElementById('log-display').innerHTML = `<div class='entry'><span class='system-tag'>[BOOT_ERR]</span><br>${e.message}</div>`;
+        }
+    }
+
+    function loadScene(id) {
+        const scene = storyData.find(s => s.id === id);
+        if (!scene) { api.setText("SCENE_NOT_FOUND: " + id); return; }
+
+        // Exit current scene
+        if (state.currentScene) {
+            const p = storyData.find(s => s.id === state.currentScene);
+            if (p?.on_exit) runScript(p.on_exit);
+        }
+
+        state.currentScene = id;
+        const win = document.getElementById('cmd-window');
+        win.className = ''; // Reset tags
+        if (scene.tags) scene.tags.forEach(t => win.classList.add(`border-${t}`));
+        
+        // Enter new scene
+        if (scene.on_enter) runScript(scene.on_enter);
+
+        const log = document.getElementById('log-display');
+        const entry = document.createElement('div'); entry.className = "entry";
+        const isSys = scene.Name.toLowerCase() === 'sistem' || scene.Name.toLowerCase() === 'system';
+        entry.innerHTML = `<span class="${isSys ? 'system-tag' : 'name-tag'}">[${scene.Name.toUpperCase()}]</span><br>${parse(scene.Text)}`;
+        log.appendChild(entry); log.scrollTop = log.scrollHeight;
+
+        const cont = document.getElementById('choices-container'); cont.innerHTML = "";
+        const inter = scene.Interaction || {};
+
+        if (inter.Dialog) {
+            const b = document.createElement('button'); b.className = "btn"; b.innerText = "> PROCEED";
+            b.onclick = () => loadScene(inter.Dialog); cont.appendChild(b);
+        } else {
+            [1, 2, 3].forEach(i => {
+                if (inter[`B${i}`]) {
+                    const b = document.createElement('button'); b.className = "btn"; b.innerText = `> ${inter[`B${i}`].toUpperCase()}`;
+                    b.onclick = () => {
+                        if (inter[`B${i}_Script`]) runScript(inter[`B${i}_Script`]);
+                        if (inter[`Dialog${i}`]) loadScene(inter[`Dialog${i}`]);
+                    };
+                    cont.appendChild(b);
+                }
+            });
+        }
+        updateDebug();
+    }
+
+    setInterval(() => { 
+        const d = new Date();
+        document.getElementById('clock').innerText = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0')+":"+d.getSeconds().toString().padStart(2,'0'); 
+    }, 1000);
+
+    init();
+</script>
+</body>
+</html>

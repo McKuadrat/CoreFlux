@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreFlux Terminal</title>
+    <style>
+        :root { --neon: #00ff41; --bg: #000; --flux: #00e1ff; --alert: #ff003c; }
+        
+        body, html { margin: 0; padding: 0; background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; }
+
+        /* --- THE MATRIX RAIN (EPIC BG) --- */
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.15; z-index: -1; }
+        
+        /* Styling Watermark Universal */
+.universal-watermark {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none; /* Biar gak ngehalangin klik */
+    z-index: 9998;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+/* Garis vertikal di samping teks */
+.wm-line {
+    width: 2px;
+    height: 30px;
+    background: var(--neon);
+    box-shadow: 0 0 10px var(--neon);
+}
+
+.wm-text {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Courier New', monospace;
+}
+
+.wm-text small {
+    font-size: 8px;
+    color: var(--flux, #00e1ff);
+    letter-spacing: 2px;
+}
+
+.wm-text strong {
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Animasi nafas halus */
+@keyframes wmPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.universal-watermark {
+    animation: wmPulse 3s infinite ease-in-out;
+}
+
+
+        /* --- INTRO OVERLAY --- */
+        #intro-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        /* Epic Glitch Box */
+        .flux-container { position: relative; padding: 20px; border: 1px solid var(--neon); box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); }
+        .glitch-title { font-size: 4rem; font-weight: 900; letter-spacing: 15px; position: relative; animation: ultraGlitch 0.5s infinite; color: #fff; text-shadow: 4px 0 var(--flux), -4px 0 var(--alert); }
+        
+        /* Progress Bar Epic */
+        .boot-bar-container { width: 300px; height: 4px; background: #111; margin-top: 40px; position: relative; overflow: hidden; border-radius: 10px; }
+        .boot-progress { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 15px var(--neon); transition: 0.2s; }
+        
+        /* Floating Terminal Lines */
+        #terminal-log { position: absolute; bottom: 50px; left: 20px; font-size: 10px; color: var(--flux); text-transform: uppercase; line-height: 1.5; opacity: 0.7; }
+
+        /* --- MAIN MENU (HIDDEN INITIALLY) --- */
+        #main-menu { display: none; flex-direction: column; align-items: center; z-index: 10; animation: menuShow 1s ease forwards; }
+        .logo-main { font-size: 4rem; margin-bottom: 50px; font-weight: 900; background: linear-gradient(to bottom, #fff, var(--neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px var(--neon)); }
+        
+        .nav-box { display: flex; flex-direction: column; gap: 20px; width: 320px; }
+        .menu-btn { 
+            padding: 20px; text-align: center; border: 1px solid var(--neon); text-decoration: none; color: var(--neon); 
+            font-weight: bold; position: relative; background: rgba(0, 255, 65, 0.05); 
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%); transition: 0.4s; overflow: hidden;
+        }
+        .menu-btn:hover { background: var(--neon); color: #000; transform: skewX(-5deg) scale(1.1); box-shadow: 0 0 50px var(--neon); }
+        .menu-btn::after { content: '>'; position: absolute; left: 15px; opacity: 0; transition: 0.3s; }
+        .menu-btn:hover::after { opacity: 1; left: 25px; }
+
+        /* Animations */
+        @keyframes ultraGlitch {
+            0% { clip-path: inset(40% 0 61% 0); transform: translate(-5px); }
+            20% { clip-path: inset(92% 0 1% 0); transform: translate(5px); }
+            40% { clip-path: inset(43% 0 1% 0); transform: translate(-5px); }
+            60% { clip-path: inset(25% 0 58% 0); transform: translate(5px); }
+            80% { clip-path: inset(54% 0 7% 0); transform: translate(-5px); }
+            100% { clip-path: inset(58% 0 43% 0); transform: translate(0); }
+        }
+
+        @keyframes menuShow { from { opacity: 0; transform: translateY(50px) rotateX(45deg); } to { opacity: 1; transform: translateY(0) rotateX(0); } }
+
+        .scanline { width: 100%; height: 100px; z-index: 11000; background: linear-gradient(0deg, transparent 0%, rgba(0,255,65,0.05) 50%, transparent 100%); position: absolute; top: -100px; animation: scan 4s linear infinite; pointer-events: none; }
+        @keyframes scan { to { top: 100%; } }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+    <div class="scanline"></div>
+
+    <div id="intro-overlay">
+        <div class="flux-container">
+            <div class="glitch-title">COREFLUX</div>
+        </div>
+        <div class="boot-bar-container">
+            <div class="boot-progress" id="bar"></div>
+        </div>
+        <div id="status-text" style="margin-top: 15px; font-size: 12px; font-weight: bold; letter-spacing: 4px;">INITIALIZING_QUANTUM_DRIVE</div>
+        <div id="terminal-log"></div>
+    </div>
+
+    <main id="main-menu">
+        <div class="logo-main">COREFLUX</div>
+        <div class="nav-box">
+            <a href="game.html" class="menu-btn">DEPLOY_GAME</a>
+            <a href="modloader.html" class="menu-btn">MOD_LOADER</a>
+            <a href="modmaker.html" class="menu-btn">MOD_MAKER</a>
+        </div>
+    </main>
+
+<script>
+    // --- MATRIX RAIN EFFECT ---
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00ff41";
+        ctx.font = fontSize + "px monospace";
+        for (let i = 0; i < drops.length; i++) {
+            const text = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(drawMatrix, 50);
+
+    // --- BOOT LOGIC ---
+    const bar = document.getElementById('bar');
+    const status = document.getElementById('status-text');
+    const logs = document.getElementById('terminal-log');
+    const logEntries = [
+        "> Loading Kernel...", "> Port 8080 Active", "> Bypassing Firewall...", "> Injecting CoreFlux JS", 
+        "> Memory Check: OK", "> Neural Link: STABLE", "> Executing Shell..."
+    ];
+
+    const hasSeenIntro = sessionStorage.getItem('coreflux_ultra_seen');
+
+    if (!hasSeenIntro) {
+        let progress = 0;
+        let logIndex = 0;
+
+        const interval = setInterval(() => {
+            progress += Math.random() * 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                finishIntro();
+            }
+            bar.style.width = progress + "%";
+            
+            if (Math.random() > 0.7 && logIndex < logEntries.length) {
+                const p = document.createElement('div');
+                p.innerText = logEntries[logIndex];
+                logs.appendChild(p);
+                logIndex++;
+                status.innerText = logEntries[logIndex-1].replace('> ', '').toUpperCase();
+            }
+        }, 100);
+    } else {
+        // Fast Boot
+        document.getElementById('intro-overlay').style.background = "rgba(0,0,0,0.85)";
+        bar.parentElement.style.display = 'none';
+        status.innerText = "RE-ESTABLISHING_SESSION...";
+        setTimeout(finishIntro, 1000);
+    }
+
+    function finishIntro() {
+        const overlay = document.getElementById('intro-overlay');
+        overlay.style.transition = "1s";
+        overlay.style.opacity = "0";
+        overlay.style.filter = "blur(20px)";
+        setTimeout(() => {
+            overlay.style.display = "none";
+            document.getElementById('main-menu').style.display = "flex";
+            sessionStorage.setItem('coreflux_ultra_seen', 'true');
+        }, 1000);
+    }
+</script>
+<div class="universal-watermark">
+    <span class="wm-line"></span>
+    <div class="wm-text">
+        <small>DEVELOPER_ID</small>
+        <strong>MC KUADRAT</strong>
+    </div>
+</div>
+
+</body>
+</html>

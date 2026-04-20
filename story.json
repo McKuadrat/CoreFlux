@@ -1,0 +1,131 @@
+[
+  {
+    "id": "awakening",
+    "Name": "SYSTEM",
+    "Text": "PERINGATAN: Integritas sistem menurun. Kamu terbangun di Sektor 7. Suara geraman mesin terdengar dari balik pintu besi.",
+    "on_enter": [
+      "api.display('HP_CORE', 'health', 'up', 'left')",
+      "api.display('DETECT_LVL', 'alert', 'up', 'right')",
+      "api.const('health', 100, 'set')",
+      "api.const('alert', 0, 'set')",
+      "api.setText('SECTOR_7_START')"
+    ],
+    "Interaction": {
+      "B1": "Ambil Pisau Energi",
+      "Dialog1": "get_weapon",
+      "B2": "Cari Jalan Keluar Diam-diam",
+      "Dialog2": "stealth_path"
+    }
+  },
+  {
+    "id": "get_weapon",
+    "Name": "SYSTEM",
+    "Text": "Pisau Energi terhubung. Kamu merasa lebih kuat, tapi sensor monster kini bisa melacak sinyal energimu.",
+    "on_enter": [
+      "api.const('has_weapon', 1, 'set')",
+      "api.const('alert', 20, 'add')",
+      "api.setText('WEAPON_EQUIPPED')"
+    ],
+    "Interaction": {
+      "Dialog": "encounter_monster"
+    }
+  },
+  {
+    "id": "stealth_path",
+    "Name": "NARRATOR",
+    "Text": "Kamu merayap melalui ventilasi. Bau oli terbakar sangat menyengat. Tiba-tiba, mata merah raksasa menatapmu dari kegelapan.",
+    "Interaction": {
+      "B1": "Tahan Napas",
+      "Dialog1": "hide_success",
+      "B2": "Lari Secepat Mungkin",
+      "Dialog2": "encounter_monster"
+    }
+  },
+  {
+    "id": "hide_success",
+    "Name": "SYSTEM",
+    "Text": "Monster itu lewat. Kamu menemukan fragmen memori yang tersisa di ventilasi.",
+    "on_enter": [
+      "api.const('memory', 1, 'add')",
+      "api.setText('STEALTH_SUCCESS')"
+    ],
+    "Interaction": {
+      "Dialog": "encounter_monster"
+    }
+  },
+  {
+    "id": "encounter_monster",
+    "Name": "VOID_BEHEMOTH",
+    "Text": "GROAAAAARRR! Makhluk itu melompat ke arahmu! Sistem mendeteksi ancaman level OMEGA!",
+    "tags": ["danger", "battle"],
+    "on_enter": [
+      "api.glitch(2)",
+      "api.setText('COMBAT_INITIATED')"
+    ],
+    "Interaction": {
+      "B1": "Serang Kepalanya!",
+      "Dialog1": "attack_head",
+      "B2": "Gunakan Protokol Bertahan",
+      "Dialog2": "defend_move"
+    }
+  },
+  {
+    "id": "attack_head",
+    "Name": "SYSTEM",
+    "Text": "Serangan berhasil! Tapi monster itu mencakar intimu. $disp(health)$% energi tersisa.",
+    "on_enter": [
+      "api.const('health', 30, 'remove')",
+      "api.glitch(0.5)"
+    ],
+    "Interaction": {
+      "B1": "Serangan Akhir!",
+      "Dialog1": "victory_scene",
+      "B2": "Mundur dan Cari Kelemahan",
+      "Dialog2": "find_weakness"
+    }
+  },
+  {
+    "id": "defend_move",
+    "Name": "SYSTEM",
+    "Text": "Kamu berhasil menangkis, tapi tekanan monster ini terlalu kuat. Kamu terlempar ke dinding.",
+    "on_enter": [
+      "api.const('health', 10, 'remove')",
+      "api.setText('SYSTEM_STABLE_LOW')"
+    ],
+    "Interaction": {
+      "Dialog": "encounter_monster"
+    }
+  },
+  {
+    "id": "find_weakness",
+    "Name": "SYSTEM",
+    "Text": "Analisis selesai. Titik lemah ada di jantung digitalnya! Lakukan sekarang!",
+    "Interaction": {
+      "B1": "Hantam Jantungnya!",
+      "Dialog1": "victory_scene"
+    }
+  },
+  {
+    "id": "victory_scene",
+    "Name": "SYSTEM",
+    "Text": "Monster hancur menjadi partikel data. Pintu Sektor 7 terbuka. Kamu selamat... untuk saat ini.",
+    "on_enter": [
+      "api.setText('VICTORY_ACHIEVED')"
+    ],
+    "Interaction": {
+      "B1": "Keluar dari Fasilitas",
+      "Dialog1": "ending"
+    }
+  },
+  {
+    "id": "ending",
+    "Name": "COREFLUX",
+    "Text": "Terima kasih telah menggunakan CoreFlux Engine. Dibuat oleh MC Kuadrat. $disp(memory)$ memori terkumpul.",
+    "on_enter": [
+      "api.glitch(1)"
+    ],
+    "Interaction": {
+      "Dialog": "awakening"
+    }
+  }
+]

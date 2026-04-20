@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheila Mod Maker v2.6</title>
+    <style>
+        :root { --neon: #00ff41; --bg: #0a0a0b; --card: #1a1a1c; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        header { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid var(--neon); display: flex; justify-content: space-between; align-items: center; }
+        .help-btn { background: var(--neon); color: #000; width: 30px; height: 30px; border-radius: 50%; border: none; font-weight: bold; cursor: pointer; }
+        
+        /* Styling Tombol Exit Universal */
+.universal-exit-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff41; /* Warna Neon Sheila */
+    text-decoration: none;
+    border: 1px solid #00ff41;
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 9999;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+    transition: 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.universal-exit-btn:hover {
+    background: #00ff41;
+    color: #000;
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+    transform: translateY(-3px);
+}
+
+.universal-exit-btn svg {
+    display: block;
+}
+
+/* Sembunyikan teks di HP kalau layar terlalu kecil biar gak penuh */
+@media (max-width: 400px) {
+    .universal-exit-btn span {
+        display: none;
+    }
+    .universal-exit-btn {
+        padding: 10px;
+        border-radius: 50%;
+    }
+}
+
+        
+        /* Navigation */
+        .nav-tabs { display: flex; overflow-x: auto; background: #111; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; }
+        .tab { flex: 1; padding: 15px; text-align: center; font-size: 11px; font-weight: bold; cursor: pointer; color: #888; white-space: nowrap; }
+        .tab.active { color: var(--neon); border-bottom: 2px solid var(--neon); background: rgba(0,255,65,0.05); }
+
+        .container { padding: 10px; max-width: 600px; margin: auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; position: relative; }
+        label { display: block; font-size: 10px; color: var(--neon); margin-bottom: 4px; text-transform: uppercase; font-weight: bold; }
+        input, textarea, select { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        
+        .btn { background: var(--neon); color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-add { background: transparent; color: var(--neon); border: 1px solid var(--neon); margin-bottom: 20px; }
+        .btn-prop { background: #333; color: #fff; padding: 8px; font-size: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #444; width: auto; display: inline-block; margin-right: 5px; }
+        .btn-danger { background: #ff3131; color: #fff; border:none; padding: 6px 10px; border-radius: 4px; font-size: 10px; float: right; }
+
+        /* Help Modal */
+        #help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .help-content { background: #111; border: 1px solid var(--neon); padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; }
+        .help-item { margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .help-code { color: var(--neon); font-family: monospace; background: #000; padding: 2px 5px; }
+
+        pre { font-family: monospace; font-size: 11px; color: #0f0; overflow-x: auto; white-space: pre-wrap; background: #050505; padding: 10px; border-radius: 5px; border: 1px solid #333; }
+        .prop-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-top: 5px; border: 1px solid #222; display: none; margin-bottom: 10px; }
+        
+        /* Styling Watermark Universal */
+.universal-watermark {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none; /* Biar gak ngehalangin klik */
+    z-index: 9998;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+/* Garis vertikal di samping teks */
+.wm-line {
+    width: 2px;
+    height: 30px;
+    background: var(--neon);
+    box-shadow: 0 0 10px var(--neon);
+}
+
+.wm-text {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Courier New', monospace;
+}
+
+.wm-text small {
+    font-size: 8px;
+    color: var(--flux, #00e1ff);
+    letter-spacing: 2px;
+}
+
+.wm-text strong {
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Animasi nafas halus */
+@keyframes wmPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.universal-watermark {
+    animation: wmPulse 3s infinite ease-in-out;
+}
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="width: 30px;"></div>
+        <strong style="color: var(--neon); letter-spacing: 2px;">SHEILA_MAKER_V2.6</strong>
+        <button class="help-btn" onclick="toggleHelp()">?</button>
+    </header>
+
+    <div id="help-modal">
+        <div class="help-content">
+            <h2 style="color:var(--neon)">API_REFERENCE</h2>
+            <div class="help-item">
+                <label>Variabel (api.const)</label>
+                <p style="font-size:12px">Ubah data var.json. Mode: 'set', 'add', 'remove'.</p>
+                <code class="help-code">api.const('koin', 10, 'add');</code>
+            </div>
+            <div class="help-item">
+                <label>Visual (api.glitch)</label>
+                <p style="font-size:12px">Layar bergetar/rusak.</p>
+                <code class="help-code">api.glitch(1.5);</code>
+            </div>
+            <div class="help-item">
+                <label>Pindah File (api.load)</label>
+                <p style="font-size:12px">Ganti chapter ke file JSON lain.</p>
+                <code class="help-code">api.load('chapter2.json');</code>
+            </div>
+            <div class="help-item">
+                <label>Lompat Scene (api.jumpTo)</label>
+                <p style="font-size:12px">Pindah ID scene secara paksa.</p>
+                <code class="help-code">api.jumpTo('target_id');</code>
+            </div>
+            <div class="help-item">
+                <label>Teks Status (api.setText)</label>
+                <p style="font-size:12px">Ubah teks kecil di footer engine.</p>
+                <code class="help-code">api.setText('DETEKSI_ERROR');</code>
+            </div>
+            <div class="help-item">
+                <label>UI Stat (api.display)</label>
+                <p style="font-size:12px">Tampilkan variabel di pojok layar.</p>
+                <code class="help-code">api.display('HP', 'darah', 'up', 'left');</code>
+            </div>
+            <div class="help-item">
+                <label>Variabel di Dialog</label>
+                <p style="font-size:12px">Gunakan di dalam kolom Text Dialog.</p>
+                <code class="help-code">$disp(nama_var)$ / $disp(random[1-10])$</code>
+            </div>
+            <button class="btn" onclick="toggleHelp()">TUTUP HELP</button>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="tab active" onclick="openTab(event, 'manifest')">MANIFEST</div>
+        <div class="tab" onclick="openTab(event, 'vars')">VARS</div>
+        <div class="tab" onclick="openTab(event, 'story')">STORY</div>
+        <div class="tab" onclick="openTab(event, 'export')">EXPORT</div>
+    </div>
+
+    <div class="container">
+        <div id="manifest" class="section active">
+            <div class="card">
+                <label>Judul Game</label><input type="text" id="m-name" placeholder="My Story">
+                <label>Start ID</label><input type="text" id="m-start" value="start_scene">
+                <label>File Story</label><input type="text" id="m-storyfiles" value="story.json">
+                <label>File Variabel</label><input type="text" id="m-varfile" value="var.json">
+            </div>
+        </div>
+
+        <div id="vars" class="section">
+            <div id="var-list">
+                <div class="card"><label>Key & Value</label><div style="display:flex;gap:5px"><input type="text" placeholder="hp" class="v-key"> <input type="text" placeholder="100" class="v-val"></div></div>
+            </div>
+            <button class="btn btn-add" onclick="addVar()">+ TAMBAH VAR</button>
+        </div>
+
+        <div id="story" class="section">
+            <div id="scene-list"></div>
+            <button class="btn btn-add" onclick="addScene()">+ TAMBAH SCENE</button>
+        </div>
+
+        <div id="export" class="section">
+            <button class="btn" onclick="buildJSON('manifest')">GENERATE MANIFEST</button>
+            <button class="btn" onclick="buildJSON('vars')">GENERATE VARS</button>
+            <button class="btn" onclick="buildJSON('story')">GENERATE STORY</button>
+            <div id="output-container">
+                <pre id="json-preview">// Hasil akan muncul di sini</pre>
+                <button class="btn" style="background:#444; color:#fff;" onclick="copyCode()">COPY</button>
+                <button class="btn" onclick="downloadJSON()">DOWNLOAD</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function toggleHelp() {
+        const modal = document.getElementById('help-modal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openTab(evt, tabName) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    function addVar() {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<button class="btn-danger" onclick="this.parentElement.remove()">HAPUS</button><label>Key & Value</label><div style="display:flex;gap:5px"><input type="text" class="v-key"> <input type="text" class="v-val"></div>`;
+        document.getElementById('var-list').appendChild(div);
+    }
+
+    function addScene() {
+        const div = document.createElement('div');
+        div.className = 'card scene-item';
+        div.innerHTML = `
+            <button class="btn-danger" onclick="this.parentElement.remove()">HAPUS SCENE</button>
+            <label>ID Scene</label><input type="text" class="s-id" placeholder="scene_01">
+            <label>Nama Karakter</label><input type="text" class="s-name" value="Sistem">
+            <label>Dialog Text</label><textarea class="s-text" rows="2"></textarea>
+            
+            <label>Tambah Fitur:</label>
+            <div style="margin-bottom:10px;">
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-tags')">+ Tags</span>
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-choice')">+ Pilihan</span>
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-script')">+ Scripts</span>
+            </div>
+
+            <div class="prop-box prop-tags"><label>Tags (koma: danger, battle)</label><input type="text" class="s-tags"></div>
+            <div class="prop-box prop-choice">
+                <label>B1 (Teks | ID | Script)</label>
+                <input type="text" class="s-b1" placeholder="Pilihan 1">
+                <input type="text" class="s-d1" placeholder="ID Tujuan">
+                <textarea class="s-b1s" rows="1" placeholder="Script B1"></textarea>
+                <label>B2 (Teks | ID | Script)</label>
+                <input type="text" class="s-b2" placeholder="Pilihan 2">
+                <input type="text" class="s-d2" placeholder="ID Tujuan">
+                <textarea class="s-b2s" rows="1" placeholder="Script B2"></textarea>
+            </div>
+            <div class="prop-box prop-script">
+                <label>On Enter</label><textarea class="s-enter" rows="2"></textarea>
+                <label>On Exit</label><textarea class="s-exit" rows="2"></textarea>
+            </div>
+            <label>Lanjut (Dialog Tunggal)</label><input type="text" class="s-next" placeholder="ID Tujuan">
+        `;
+        document.getElementById('scene-list').appendChild(div);
+    }
+
+    function toggleProp(btn, cls) {
+        const box = btn.parentElement.parentElement.querySelector('.' + cls);
+        box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        btn.style.background = box.style.display === 'block' ? 'var(--neon)' : '#333';
+        btn.style.color = box.style.display === 'block' ? '#000' : '#fff';
+    }
+
+    function buildJSON(type) {
+        let data;
+        let filename = type + ".json";
+        if (type === 'manifest') {
+            const sF = document.getElementById('m-storyfiles').value.split(',').map(s => s.trim().endsWith('.json') ? s.trim() : s.trim()+'.json');
+            data = { name: document.getElementById('m-name').value || "Game", author: "Kuadrat", debug: true, start: document.getElementById('m-start').value, files: { story: sF.length > 1 ? sF : sF[0], vars: document.getElementById('m-varfile').value.endsWith('.json') ? document.getElementById('m-varfile').value : document.getElementById('m-varfile').value + '.json' } };
+            filename = "manifest.json";
+        } else if (type === 'vars') {
+            data = {};
+            document.querySelectorAll('#var-list .card').forEach(c => { const k = c.querySelector('.v-key').value; const v = c.querySelector('.v-val').value; if(k) data[k] = isNaN(v) ? v : parseFloat(v); });
+        } else if (type === 'story') {
+            data = [];
+            document.querySelectorAll('.scene-item').forEach(s => {
+                const sid = s.querySelector('.s-id').value; if(!sid) return;
+                const obj = { id: sid, Name: s.querySelector('.s-name').value, Text: s.querySelector('.s-text').value, Interaction: {} };
+                const tags = s.querySelector('.s-tags').value; if(tags) obj.tags = tags.split(',').map(t => t.trim());
+                const enter = s.querySelector('.s-enter').value; if(enter) obj.on_enter = enter.split('\n').filter(l => l.trim() !== "");
+                const exit = s.querySelector('.s-exit').value; if(exit) obj.on_exit = exit.split('\n').filter(l => l.trim() !== "");
+                const next = s.querySelector('.s-next').value;
+                if(next) obj.Interaction.Dialog = next;
+                else {
+                    [1,2].forEach(i => {
+                        const bT = s.querySelector('.s-b'+i).value;
+                        if(bT) {
+                            obj.Interaction['B'+i] = bT;
+                            obj.Interaction['Dialog'+i] = s.querySelector('.s-d'+i).value;
+                            if(s.querySelector('.s-b'+i+'s').value) obj.Interaction['B'+i+'_Script'] = s.querySelector('.s-b'+i+'s').value;
+                        }
+                    });
+                }
+                data.push(obj);
+            });
+        }
+        const out = JSON.stringify(data, null, 2);
+        document.getElementById('json-preview').innerText = out;
+        window.lastGen = { name: filename, content: out };
+    }
+
+    function copyCode() { navigator.clipboard.writeText(document.getElementById('json-preview').innerText); alert("OK!"); }
+    function downloadJSON() { 
+        const blob = new Blob([window.lastGen.content], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = window.lastGen.name; a.click();
+    }
+    addScene();
+</script>
+<a href="index.html" class="universal-exit-btn">
+    <svg viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+    </svg>
+    <span>Home</span>
+</a>
+<div class="universal-watermark">
+    <span class="wm-line"></span>
+    <div class="wm-text">
+        <small>DEVELOPER_ID</small>
+        <strong>MC KUADRAT</strong>
+    </div>
+</div>
+
+</body>
+</html>

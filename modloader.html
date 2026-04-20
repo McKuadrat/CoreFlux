@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sheila Engine - Mod Loader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+    /* Styling Watermark Universal */
+.universal-watermark {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none; /* Biar gak ngehalangin klik */
+    z-index: 9998;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+/* Garis vertikal di samping teks */
+.wm-line {
+    width: 2px;
+    height: 30px;
+    background: var(--neon);
+    box-shadow: 0 0 10px var(--neon);
+}
+
+.wm-text {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Courier New', monospace;
+}
+
+.wm-text small {
+    font-size: 8px;
+    color: var(--flux, #00e1ff);
+    letter-spacing: 2px;
+}
+
+.wm-text strong {
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Animasi nafas halus */
+@keyframes wmPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.universal-watermark {
+    animation: wmPulse 3s infinite ease-in-out;
+}
+
+    
+    /* Styling Tombol Exit Universal */
+.universal-exit-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff41; /* Warna Neon Sheila */
+    text-decoration: none;
+    border: 1px solid #00ff41;
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    z-index: 9999;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+    transition: 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.universal-exit-btn:hover {
+    background: #00ff41;
+    color: #000;
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+    transform: translateY(-3px);
+}
+
+.universal-exit-btn svg {
+    display: block;
+}
+
+/* Sembunyikan teks di HP kalau layar terlalu kecil biar gak penuh */
+@media (max-width: 400px) {
+    .universal-exit-btn span {
+        display: none;
+    }
+    .universal-exit-btn {
+        padding: 10px;
+        border-radius: 50%;
+    }
+}
+
+        body { background: #0a0a0b; color: #00ff41; font-family: 'Consolas', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .upload-box { border: 2px dashed #00ff41; padding: 50px; text-align: center; cursor: pointer; transition: 0.3s; width: 350px; border-radius: 8px; }
+        .upload-box:hover { background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 30px rgba(0, 255, 65, 0.2); }
+        h1 { text-shadow: 0 0 10px #00ff41; letter-spacing: 5px; }
+        #status { margin-top: 25px; font-size: 12px; color: #888; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <h1>SHEILA_LOADER</h1>
+    <label class="upload-box">
+        <p>DROP .ZIP MOD FILE HERE</p>
+        <input type="file" id="file-input" accept=".zip">
+    </label>
+    <div id="status">AWAITING_INPUT...</div>
+
+    <script>
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('status');
+            status.innerText = "EXTRACTING_RESOURCES...";
+            
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const resources = {};
+                
+                const manifestFile = zip.file("manifest.json");
+                if (!manifestFile) throw new Error("manifest.json not found in ZIP!");
+                const manifest = JSON.parse(await manifestFile.async("string"));
+
+                const files = Object.keys(zip.files);
+                for (let fileName of files) {
+                    if (!zip.files[fileName].dir) {
+                        resources[fileName] = await zip.file(fileName).async("string");
+                    }
+                }
+
+                sessionStorage.setItem('mod_resources', JSON.stringify(resources));
+                sessionStorage.setItem('mod_manifest', JSON.stringify(manifest));
+
+                status.innerText = "LAUNCHING_ENGINE...";
+                window.location.href = "game.html?mode=mod";
+            } catch (err) {
+                status.innerText = "FATAL_ERROR: " + err.message;
+            }
+        });
+    </script>
+    <a href="index.html" class="universal-exit-btn">
+    <svg viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+    </svg>
+    <span>INDEX</span>
+</a>
+<div class="universal-watermark">
+    <span class="wm-line"></span>
+    <div class="wm-text">
+        <small>DEVELOPER_ID</small>
+        <strong>MC KUADRAT</strong>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "Project: Neural Breach",
+  "author": "MC Kuadrat",
+  "version": "1.0",
+  "debug": false,
+  "start": "awakening",
+  "files": {
+    "story": "story.json",
+    "vars": "var.json"
+  }
+}
