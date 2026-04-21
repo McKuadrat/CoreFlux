@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoreFlux Engine Visual Mod Maker</title>
+    <title>CoreFlux Mod Maker</title>
     <style>
         :root { --neon: #00ff41; --bg: #0a0a0b; --card: #1a1a1c; --text: #e0e0e0; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 80px; }
@@ -34,6 +34,247 @@
         
         pre { font-family: monospace; font-size: 11px; color: #0f0; overflow-x: auto; white-space: pre-wrap; background: #050505; padding: 10px; border-radius: 5px; border: 1px solid #333; }
         .prop-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-top: 5px; border: 1px solid #222; display: none; margin-bottom: 10px; }
+        
+        .universal-exit-btn { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); color: var(--neon); text-decoration: none; border: 1px solid var(--neon); border-radius: 50px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-size: 12px; z-index: 9999; }
+        .universal-watermark { position: fixed; bottom: 20px; left: 20px; display: flex; align-items: center; gap: 12px; opacity: 0.6; pointer-events: none; }
+        .wm-line { width: 2px; height: 30px; background: var(--neon); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="width: 30px;"></div>
+        <strong style="color: var(--neon); letter-spacing: 2px;">COREFLUX MOD MAKER</strong>
+        <button class="help-btn" onclick="toggleHelp()">?</button>
+    </header>
+
+    <div id="help-modal">
+        <div class="help-content">
+            <h2 style="color:var(--neon)">API_REFERENCE</h2>
+            <p style="font-size:12px; color:#888;">Gunakan tombol IMPORT untuk memuat file JSON lama.</p>
+            <button class="btn" onclick="toggleHelp()">TUTUP HELP</button>
+        </div>
+    </div>
+
+    <div class="nav-tabs">
+        <div class="tab active" onclick="openTab(event, 'manifest')">MANIFEST</div>
+        <div class="tab" onclick="openTab(event, 'vars')">VARS</div>
+        <div class="tab" onclick="openTab(event, 'story')">STORY</div>
+        <div class="tab" onclick="openTab(event, 'export')">EXPORT</div>
+    </div>
+
+    <div class="container">
+        <div id="manifest" class="section active">
+            <input type="file" id="import-manifest" style="display:none" onchange="importData(this, 'manifest')">
+            <button class="btn-import" onclick="document.getElementById('import-manifest').click()">ðŸ“¥ IMPORT MANIFEST.JSON</button>
+            <div class="card">
+                <label>Judul Game</label><input type="text" id="m-name" placeholder="My Story">
+                <label>Start ID</label><input type="text" id="m-start" value="start_scene">
+                <label>File Story</label><input type="text" id="m-storyfiles" value="story.json">
+                <label>File Variabel</label><input type="text" id="m-varfile" value="var.json">
+            </div>
+        </div>
+
+        <div id="vars" class="section">
+            <input type="file" id="import-vars" style="display:none" onchange="importData(this, 'vars')">
+            <button class="btn-import" onclick="document.getElementById('import-vars').click()">ðŸ“¥ IMPORT VAR.JSON</button>
+            <div id="var-list"></div>
+            <button class="btn btn-add" onclick="addVar()">+ TAMBAH VAR</button>
+        </div>
+
+        <div id="story" class="section">
+            <input type="file" id="import-story" style="display:none" onchange="importData(this, 'story')">
+            <button class="btn-import" onclick="document.getElementById('import-story').click()">ðŸ“¥ IMPORT STORY.JSON</button>
+            <div id="scene-list"></div>
+            <button class="btn btn-add" onclick="addScene()">+ TAMBAH SCENE</button>
+        </div>
+
+        <div id="export" class="section">
+            <button class="btn" onclick="buildJSON('manifest')">GENERATE MANIFEST</button>
+            <button class="btn" onclick="buildJSON('vars')">GENERATE VARS</button>
+            <button class="btn" onclick="buildJSON('story')">GENERATE STORY</button>
+            <div id="output-container">
+                <pre id="json-preview">// Hasil akan muncul di sini</pre>
+                <button class="btn" style="background:#444; color:#fff;" onclick="copyCode()">COPY</button>
+                <button class="btn" onclick="downloadJSON()">DOWNLOAD</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function toggleHelp() {
+        const modal = document.getElementById('help-modal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openTab(evt, tabName) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    function addVar(k = "", v = "") {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<button class="btn-danger" onclick="this.parentElement.remove()">HAPUS</button><label>Key & Value</label><div style="display:flex;gap:5px"><input type="text" class="v-key" value="${k}"> <input type="text" class="v-val" value="${v}"></div>`;
+        document.getElementById('var-list').appendChild(div);
+    }
+
+    function addScene() {
+        const div = document.createElement('div');
+        div.className = 'card scene-item';
+        div.innerHTML = `
+            <button class="btn-danger" onclick="this.parentElement.remove()">HAPUS SCENE</button>
+            <label>ID Scene</label><input type="text" class="s-id" placeholder="scene_01">
+            <label>Nama Karakter</label><input type="text" class="s-name" value="Sistem">
+            <label>Dialog Text</label><textarea class="s-text" rows="2"></textarea>
+            
+            <label>Tambah Fitur:</label>
+            <div style="margin-bottom:10px;">
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-tags')">+ Tags</span>
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-choice')">+ Pilihan</span>
+                <span class="btn-prop" onclick="toggleProp(this, 'prop-script')">+ Scripts</span>
+            </div>
+
+            <div class="prop-box prop-tags"><label>Tags (koma: danger, battle)</label><input type="text" class="s-tags"></div>
+            <div class="prop-box prop-choice">
+                <label>B1 (Teks | ID | Script)</label>
+                <input type="text" class="s-b1" placeholder="Pilihan 1">
+                <input type="text" class="s-d1" placeholder="ID Tujuan">
+                <textarea class="s-b1s" rows="1" placeholder="Script B1"></textarea>
+                <label>B2 (Teks | ID | Script)</label>
+                <input type="text" class="s-b2" placeholder="Pilihan 2">
+                <input type="text" class="s-d2" placeholder="ID Tujuan">
+                <textarea class="s-b2s" rows="1" placeholder="Script B2"></textarea>
+            </div>
+            <div class="prop-box prop-script">
+                <label>On Enter (Baris Baru untuk tiap fungsi)</label><textarea class="s-enter" rows="2"></textarea>
+                <label>On Exit</label><textarea class="s-exit" rows="2"></textarea>
+            </div>
+            <label>Lanjut (Dialog Tunggal)</label><input type="text" class="s-next" placeholder="ID Tujuan">
+        `;
+        document.getElementById('scene-list').appendChild(div);
+        return div;
+    }
+
+    function toggleProp(btn, cls) {
+        const box = btn.parentElement.parentElement.querySelector('.' + cls);
+        box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        btn.style.background = box.style.display === 'block' ? 'var(--neon)' : '#333';
+        btn.style.color = box.style.display === 'block' ? '#000' : '#fff';
+    }
+
+    function importData(input, type) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (type === 'manifest') {
+                    document.getElementById('m-name').value = json.name || "";
+                    document.getElementById('m-start').value = json.start || "";
+                    document.getElementById('m-varfile').value = json.files.vars || "";
+                    document.getElementById('m-storyfiles').value = Array.isArray(json.files.story) ? json.files.story.join(", ") : json.files.story;
+                } else if (type === 'vars') {
+                    document.getElementById('var-list').innerHTML = "";
+                    for (let k in json) addVar(k, json[k]);
+                } else if (type === 'story') {
+                    document.getElementById('scene-list').innerHTML = "";
+                    json.forEach(s => {
+                        const el = addScene();
+                        el.querySelector('.s-id').value = s.id || "";
+                        el.querySelector('.s-name').value = s.Name || "";
+                        el.querySelector('.s-text').value = s.Text || "";
+                        if(s.tags) { el.querySelector('.s-tags').value = s.tags.join(", "); toggleProp(el.querySelectorAll('.btn-prop')[0], 'prop-tags'); }
+                        if(s.on_enter) { el.querySelector('.s-enter').value = s.on_enter.join("\n"); toggleProp(el.querySelectorAll('.btn-prop')[2], 'prop-script'); }
+                        if(s.on_exit) { el.querySelector('.s-exit').value = s.on_exit.join("\n"); }
+                        if(s.Interaction) {
+                            if(s.Interaction.Dialog) el.querySelector('.s-next').value = s.Interaction.Dialog;
+                            if(s.Interaction.B1) {
+                                toggleProp(el.querySelectorAll('.btn-prop')[1], 'prop-choice');
+                                el.querySelector('.s-b1').value = s.Interaction.B1;
+                                el.querySelector('.s-d1').value = s.Interaction.Dialog1;
+                                el.querySelector('.s-b1s').value = s.Interaction.B1_Script || "";
+                                if(s.Interaction.B2) {
+                                    el.querySelector('.s-b2').value = s.Interaction.B2;
+                                    el.querySelector('.s-d2').value = s.Interaction.Dialog2;
+                                    el.querySelector('.s-b2s').value = s.Interaction.B2_Script || "";
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (err) { alert("Format JSON tidak valid!"); }
+        };
+        reader.readAsText(file);
+    }
+
+    function buildJSON(type) {
+        let data;
+        let filename = type + ".json";
+        if (type === 'manifest') {
+            const sF = document.getElementById('m-storyfiles').value.split(',').map(s => s.trim());
+            data = { name: document.getElementById('m-name').value, author: "MC KUADRAT", debug: true, start: document.getElementById('m-start').value, files: { story: sF.length > 1 ? sF : sF[0], vars: document.getElementById('m-varfile').value } };
+        } else if (type === 'vars') {
+            data = {};
+            document.querySelectorAll('#var-list .card').forEach(c => { const k = c.querySelector('.v-key').value; const v = c.querySelector('.v-val').value; if(k) data[k] = isNaN(v) ? v : parseFloat(v); });
+        } else if (type === 'story') {
+            data = [];
+            document.querySelectorAll('.scene-item').forEach(s => {
+                const sid = s.querySelector('.s-id').value; if(!sid) return;
+                const obj = { id: sid, Name: s.querySelector('.s-name').value, Text: s.querySelector('.s-text').value, Interaction: {} };
+                const tags = s.querySelector('.s-tags').value; if(tags) obj.tags = tags.split(',').map(t => t.trim());
+                const enter = s.querySelector('.s-enter').value; if(enter) obj.on_enter = enter.split('\n').filter(l => l.trim() !== "");
+                const exit = s.querySelector('.s-exit').value; if(exit) obj.on_exit = exit.split('\n').filter(l => l.trim() !== "");
+                const next = s.querySelector('.s-next').value;
+                if(next) obj.Interaction.Dialog = next;
+                else {
+                    [1,2].forEach(i => {
+                        const bT = s.querySelector('.s-b'+i).value;
+                        if(bT) {
+                            obj.Interaction['B'+i] = bT;
+                            obj.Interaction['Dialog'+i] = s.querySelector('.s-d'+i).value;
+                            const scr = s.querySelector('.s-b'+i+'s').value; if(scr) obj.Interaction['B'+i+'_Script'] = scr;
+                        }
+                    });
+                }
+                data.push(obj);
+            });
+        }
+        const out = JSON.stringify(data, null, 2);
+        document.getElementById('json-preview').innerText = out;
+        window.lastGen = { name: filename, content: out };
+    }
+
+    function copyCode() { navigator.clipboard.writeText(document.getElementById('json-preview').innerText); alert("Disalin!"); }
+    function downloadJSON() { 
+        if(!window.lastGen) return alert("Generate dulu!");
+        const blob = new Blob([window.lastGen.content], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = window.lastGen.name; a.click();
+    }
+    
+    // Inisialisasi awal
+    addVar("health", 100);
+    addScene();
+</script>
+
+<a href="index.html" class="universal-exit-btn">
+    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg>
+    <span>Home</span>
+</a>
+
+<div class="universal-watermark">
+    <span class="wm-line"></span>
+    <div class="wm-text">
+        <small style="font-size:8px; color:#00e1ff; letter-spacing:2px;">DEVELOPER_ID</small>
+        <strong style="font-size:12px; color:#fff; letter-spacing:3px;">MC KUADRAT</strong>
+    </div>
+</div>
+
+</body>
+</html>
         
         .universal-exit-btn { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); color: var(--neon); text-decoration: none; border: 1px solid var(--neon); border-radius: 50px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-size: 12px; z-index: 9999; }
         .universal-watermark { position: fixed; bottom: 20px; left: 20px; display: flex; align-items: center; gap: 12px; opacity: 0.6; pointer-events: none; }
